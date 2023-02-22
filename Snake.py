@@ -1,25 +1,32 @@
 # import required libraries
 from curses import KEY_DOWN
 from pickle import NONE
-import time
 import pygame
 import itertools
 import random
+import sys
+sys.path.append("/Users/chiendao/Desktop/Snake AI/button")
 
-WIDTH, HEIGHT = int(160), int(160)
+
+WIDTH, HEIGHT = int(600), int(600)
 ROWS = 20
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake")
 
 #Some colors that will be used in the game
 BLUE = (0, 0, 255)
-RED = (0, 255, 0)
+RED = (255, 0, 0)
+GREEN  = (0, 255, 0)
+GREY = (128,128,128)
+BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
 
+# button.Button()
 #Initialize the available pixels for the food (except those that have the snake on)
 available_pixels = list(itertools.product(*[range(0,500,10),range(0,500,10)]))
 
 
-FPS = 5
+fps = 5
 
 def draw_window():
     return
@@ -46,6 +53,23 @@ for i in range(40):
     for j in range(40):
         available_pixels.append(100 * i + j)
 
+class Button:
+    def __init__(self, x, y , width, height, color, message, message_x, message_y):
+        self.x = x
+        self.y = y
+        self.message_x = message_x
+        self.message_y = message_y
+        self.width = width
+        self.height = height
+        self.color = color
+        self.message = message
+
+    def draw(self):
+        pygame.draw.rect(WIN, self.color, [self.x, self.y, self.width, self.height], 0)
+        smallfont = pygame.font.SysFont('Corbel',35)
+        text = smallfont.render(self.message , True , BLACK)
+        WIN.blit(text, (self.message_x, self.message_y))
+
 class Food:
     def __init__(self, is_collide, snake_length, grid):
         self.current_pixel = None
@@ -66,7 +90,7 @@ class Food:
         counter = 0
 
         if is_collide or self.current_pixel == None:
-            print(grid.cells)
+            # print(grid.cells)
             random_pixel = random.randint(0, (WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - snake_length - 1)
             # print(random_pixel)
             for i in range(len(grid.cells)):
@@ -74,10 +98,6 @@ class Food:
                 # print(grid.cells[i])
                 if grid.cells[i] == False:
                     if counter == random_pixel:
-                        print('spawn')
-                        print(random_pixel)
-                        print(i)
-                        print(grid.cells[i])
                         self.current_pixel = Pixel(PIXEL_SIZE * (i % (WIDTH // 20)),PIXEL_SIZE * (i // (WIDTH // 20)), RED)
                         break
                     counter = counter + 1
@@ -86,7 +106,7 @@ class Food:
 
 class Snake:
     def __init__(self):
-        self.head = Pixel(WIDTH / 2, HEIGHT / 2, BLUE) #Initial head position of the snake
+        self.head = Pixel(WIDTH / 2, HEIGHT / 2, GREEN) #Initial head position of the snake
         self.blocks = [self.head] #Position of all the snake blocks
         self.direction = None
         self.color = BLUE
@@ -120,114 +140,215 @@ class Snake:
     def draw(self):
         for block in self.blocks:
             block.draw()
-    
-    #Grow after eating food:
-    # def grow(self, grid):
-        # if len(self.blocks) > 1:
-        #     if self.blocks[-1].x == self.blocks[-2].x:
-        #         #The tail is moving up
-        #         if self.blocks[-1].y > self.blocks[-2].y:
-        #             if self.blocks[-1].y + PIXEL_SIZE < HEIGHT and grid.cells[int(sel.y * (HEIGHT // 20) // 20 + block.x // 20)] 
-        #             self.blocks.append(Pixel(self.blocks[-1].x, self.blocks[-1].y + PIXEL_SIZE, BLUE))
-        #         else:
-        #             self.blocks.append(Pixel(self.blocks[-1].x, self.blocks[-1].y + PIXEL_SIZE, BLUE))
-        #     else:
-        #         if self.blocks[-1].x > self.blocks[-2].x:
-        #             self.blocks.append(Pixel(self.blocks[-1].x + PIXEL_SIZE, self.blocks[-1].y, BLUE))
-        #         else:
-        #             self.blocks.append(Pixel(self.blocks[-1].x - PIXEL_SIZE, self.blocks[-1].y, BLUE))
-        # else:
-        #     if self.direction == 'left':
-        #         self.blocks.append(Pixel(self.blocks[-1].x + PIXEL_SIZE, self.blocks[-1].y, BLUE))
-        #     if self.direction == 'right':
-        #         self.blocks.append(Pixel(self.blocks[-1].x - PIXEL_SIZE, self.blocks[-1].y, BLUE))
-        #     if self.direction == 'up':
-        #         self.blocks.append(Pixel(self.blocks[-1].x, self.blocks[-1].y + PIXEL_SIZE, BLUE))
-        #     if self.direction == 'down':
-        #         self.blocks.append(Pixel(self.blocks[-1].x, self.blocks[-1].y - PIXEL_SIZE, BLUE))
-
+   
 class Grid:
     def __init__(self):
         self.cells = [False for i in range((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE))]
 
+
+def draw_text(text, font, text_col, x ,y):
+    img = font.render(text, True, text_col)
+    WIN.blit(img, (x, y))
+
+def display_menu():
+    play_button = Button(WIDTH / 3, HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'PLAY', 3 * WIDTH / 8, 3 * HEIGHT / 16)
+    option_button = Button(WIDTH / 3, 3 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'OPTIONS', 3 * WIDTH / 8, 7 * HEIGHT / 16)
+    quit_button = Button(WIDTH / 3, 5 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'QUIT', 3 * WIDTH / 8, 11 * HEIGHT / 16)
+        
+    play_button.draw()
+    option_button.draw()
+    quit_button.draw()    
+
 def main():
+    is_main_menu = True #Variable to know if we are in the main menu
+    is_playing = False # Indicate whether the player has started the game
+    is_manual = True # Indicate the game mode
+    is_option = False
+    is_level = False
+    is_mode = False
+    difficulty = 'medium'
     clock = pygame.time.Clock()
     run = True
     snake = Snake()
     grid = Grid()
+    pygame.init()
     food = Food(snake.is_collide, snake.length, grid)
-
+    play_button = Button(WIDTH / 3, HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'PLAY', 3 * WIDTH / 8, 3 * HEIGHT / 16)
+    option_button = Button(WIDTH / 3, 3 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'OPTIONS', 3 * WIDTH / 8, 7 * HEIGHT / 16)
+    quit_button = Button(WIDTH / 3, 5 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'QUIT', 3 * WIDTH / 8, 11 * HEIGHT / 16)
+    level_button = Button(WIDTH / 3, HEIGHT / 3, WIDTH / 3, HEIGHT / 8, GREY, 'LEVEL', 2 * WIDTH / 5, 2*HEIGHT/5)
+    mode_button = Button(WIDTH / 3, 2 * HEIGHT / 3, WIDTH / 3, HEIGHT / 8, GREY, 'MODE', 2 * WIDTH / 5, 7*HEIGHT/10)
+    manual_button = Button(WIDTH / 3, HEIGHT / 3, WIDTH / 3, HEIGHT / 8, GREY, 'MANUAL', 2 * WIDTH / 5, 2*HEIGHT/5)
+    ai_button = Button(WIDTH / 3, 2 * HEIGHT / 3, WIDTH / 3, HEIGHT / 8, GREY, 'AI', 2 * WIDTH / 5, 7*HEIGHT/10)
+    easy_button = Button(WIDTH / 3, HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'EASY', 3 * WIDTH / 8, 3 * HEIGHT / 16)
+    medium_button = Button(WIDTH / 3, 3 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'MEDIUM', 3 * WIDTH / 8, 7 * HEIGHT / 16)
+    hard_button = Button(WIDTH / 3, 5 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'HARD', 3 * WIDTH / 8, 11 * HEIGHT / 16)
+    back_button = Button(20, 20, 100, 50, GREY, 'BACK', 30, 30)
 
     while run:
-        pygame.time.delay(50)
-        clock.tick(FPS)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        WIN.fill((100, 100, 23))
+            
+
+        if is_main_menu:
+              
+            play_button.draw()
+            option_button.draw()
+            quit_button.draw()
+
+        pygame.time.delay(20)
+
+        if difficulty == 'easy':
+            clock.tick(fps)
+        elif difficulty == 'medium':
+            clock.tick(fps * 2)
+        elif difficulty == 'hard':
+            clock.tick(fps * 4)
+
+        event = pygame.event.poll()
+        mouse = pygame.mouse.get_pos()
+        if event.type == pygame.QUIT:
                 run = False
-            elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT and snake.direction != 'right':
                     snake.direction = 'left'
+                    # print('press left')
                 elif event.key == pygame.K_RIGHT and snake.direction != 'left':
                     snake.direction = 'right'
+                    # print('press right')
                 elif event.key == pygame.K_DOWN and snake.direction != 'up':
                     snake.direction = 'down'
+                    # print('press up')
                 elif event.key == pygame.K_UP and snake.direction != 'down':
                     snake.direction = 'up'
-                else:
+                    # print('press down')
+                elif event.key == pygame.K_SPACE:
                     snake.direction = None
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            print(mouse)
+            if is_main_menu:
+                if mouse[0] >= play_button.x and mouse[0] <= play_button.x + play_button.width and mouse[1] >= play_button.y and mouse[1] <= play_button.y + play_button.height:
+                    is_playing = True
+                    is_main_menu = False
+                    print('success')
+                elif mouse[0] >= quit_button.x and mouse[0] <= quit_button.x + quit_button.width and mouse[1] >= quit_button.y and mouse[1] <= quit_button.y + quit_button.height:
+                    pygame.quit()
+                    run = False
+                elif mouse[0] >= option_button.x and mouse[0] <= option_button.x + option_button.width and mouse[1] >= option_button.y and mouse[1] <= option_button.y + option_button.height:
+                    is_main_menu = False
+                    is_option = True
+            elif is_option:
+                if is_level:
+                    if mouse[0] >= easy_button.x and mouse[0] <= easy_button.x + easy_button.width and mouse[1] >= easy_button.y and mouse[1] <= easy_button.y + easy_button.height:
+                        difficulty = 'easy'
+                    elif mouse[0] >= medium_button.x and mouse[0] <= medium_button.x + medium_button.width and mouse[1] >= medium_button.y and mouse[1] <= medium_button.y + medium_button.height:
+                        difficulty = 'medium'
+                    elif mouse[0] >= hard_button.x and mouse[0] <= hard_button.x + hard_button.width and mouse[1] >= hard_button.y and mouse[1] <= hard_button.y + hard_button.height:
+                        difficulty = 'hard'
+                    elif mouse[0] >= back_button.x and mouse[0] <= back_button.x + back_button.width and mouse[1] >= back_button.y and mouse[1] <= back_button.y + back_button.height:
+                        is_level = False
+                
+                elif is_mode:
+                    if mouse[0] >= manual_button.x and mouse[0] <= manual_button.x + manual_button.width and mouse[1] >= manual_button.y and mouse[1] <= manual_button.y + manual_button.height:
+                        is_manual = True
+                    elif mouse[0] >= ai_button.x and mouse[0] <= ai_button.x + ai_button.width and mouse[1] >= ai_button.y and mouse[1] <= ai_button.y + ai_button.height:
+                        is_manual = False
+                    elif mouse[0] >= back_button.x and mouse[0] <= back_button.x + back_button.width and mouse[1] >= back_button.y and mouse[1] <= back_button.y + back_button.height:
+                        is_mode = False
 
+                elif mouse[0] >= level_button.x and mouse[0] <= level_button.x + level_button.width and mouse[1] >= level_button.y and mouse[1] <= level_button.y + level_button.height:
+                    is_level = True
+                elif mouse[0] >= mode_button.x and mouse[0] <= mode_button.x + mode_button.width and mouse[1] >= mode_button.y and mouse[1] <= mode_button.y + mode_button.height:
+                    print('mode')
+                    is_mode = True
+                elif mouse[0] >= back_button.x and mouse[0] <= back_button.x + back_button.width and mouse[1] >= back_button.y and mouse[1] <= back_button.y + back_button.height:
+                    is_option = False
+                    is_level = False
+                    is_mode = False
+                    is_main_menu = True
 
+        if is_playing:
+            #Display score
+            smallfont = pygame.font.SysFont('Corbel', 30)
+            score = smallfont.render('Score: ' + str(snake.length) , True , BLACK)  
+            WIN.blit(score, (20, 20))          
+            if is_manual:
+                if snake.direction == 'left':
+                    snake.move_left()
+                    # print('left')
+                elif snake.direction == 'right':
+                    snake.move_right()
+                    # print('right')
+                elif snake.direction == 'up':
+                    snake.move_up()
+                    # print('up')
+                elif snake.direction == 'down':
+                    snake.move_down()
+                    # print('down')
+                
+                if abs(snake.head.x - food.current_pixel.x) < 20 and abs(snake.head.y - food.current_pixel.y) < 20:
+                    snake.is_collide = True
+                    snake.length = snake.length + 1
+                    print(snake.length)
+                    # food.remove_pixel(snake.blocks[-1])
+                else:
+                    snake.is_collide = False
 
-        if snake.direction == 'left':
-            snake.move_left()
-        elif snake.direction == 'right':
-            snake.move_right()
-        elif snake.direction == 'up':
-            snake.move_up()
-        elif snake.direction == 'down':
-            snake.move_down()
-        
-        if abs(snake.head.x - food.current_pixel.x) < 20 and abs(snake.head.y - food.current_pixel.y) < 20:
-            snake.is_collide = True
-            snake.length = snake.length + 1
-            # food.remove_pixel(snake.blocks[-1])
-        else:
-            snake.is_collide = False
+                #Detect collision with itself (game over)
+                if snake.direction != None:
+                    if snake.head.x < 0 or snake.head.x > WIDTH - PIXEL_SIZE or snake.head.y < 0 or snake.head.y > HEIGHT- PIXEL_SIZE or grid.cells[int(snake.head.y * (HEIGHT // 20) // 20 + snake.head.x // 20)]:
+                        is_playing = False
+                        is_main_menu = True
+                        snake = Snake()
+                        grid = Grid()
 
-        #Detect collision with itself or wall:
-
-            # print(block.x, block.y)
-            # print(int(block.y * (HEIGHT // 20) // 20 + block.x // 20))
-        # print('-----')
-
-        #Detect collision with itself (game over)
-        if snake.direction != None:
-            if snake.head.x < 0 or snake.head.x > WIDTH - PIXEL_SIZE or snake.head.y < 0 or snake.head.y > HEIGHT- PIXEL_SIZE:
-                pygame.quit()
-            elif grid.cells[int(snake.head.y * (HEIGHT // 20) // 20 + snake.head.x // 20)] == True:
-                pygame.quit()
-
-        
-
-        grid = Grid()
-        for block in snake.blocks:
-            print(block.x, block.y)
-            grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
-        
-
-        #Dectect collision with wall or itself (game over):
-
-
-        WIN.fill((100, 100, 23))
-        snake.draw()
-        food.spawn_food(snake.is_collide, snake.length, grid)
-        # print(food.current_pixel.x, food.current_pixel.y)
-        food.current_pixel.draw()
-        
+                #Reset the status of each cell on the grid (whethere it is a snake block)
+                grid = Grid()
+                for block in snake.blocks:
+                    grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
             
-        # print(grid.cells)
-        pygame.display.update()
-    pygame.quit()
+
+                snake.draw()
+                food.spawn_food(snake.is_collide, snake.length, grid)
+                # print(food.current_pixel.x, food.current_pixel.y)
+                food.current_pixel.draw()
+                
+                    
+                # print(grid.cells)
+        # pygame.quit()
+
+        if is_option:
+            back_button.draw()
+            if is_level:
+                if difficulty == 'easy':
+                    easy_button.color = YELLOW
+                    medium_button.color = GREY
+                    hard_button.color = GREY
+                elif difficulty == 'medium':
+                    easy_button.color = GREY
+                    medium_button.color = YELLOW
+                    hard_button.color = GREY
+                else:
+                    easy_button.color = GREY
+                    medium_button.color = GREY
+                    hard_button.color = YELLOW
+                easy_button.draw()
+                medium_button.draw()
+                hard_button.draw()
+            elif is_mode:
+                if is_manual:
+                    manual_button.color = YELLOW
+                    ai_button.color = GREY
+                else:
+                    manual_button.color = GREY
+                    ai_button.color = YELLOW
+                ai_button.draw()
+                manual_button.draw()
+            else:
+                level_button.draw()
+                mode_button.draw()
+
+        if run:
+          pygame.display.update()
 
 if __name__ == "__main__":
     main()
