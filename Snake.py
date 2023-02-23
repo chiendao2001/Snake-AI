@@ -53,6 +53,37 @@ for i in range(40):
     for j in range(40):
         available_pixels.append(100 * i + j)
 
+def get_distance(grid, snake_pixel, current_food_pixel):
+    distance = -1 
+    #Only check if the pixel is inside the grid
+    # print(snake_pixel.x, snake_pixel.y)
+    if snake_pixel.x >= 0 and snake_pixel.x < WIDTH and snake_pixel.y >= 0 and snake_pixel.y < HEIGHT:
+        snake_cell = grid.cells[int((snake_pixel.y // PIXEL_SIZE) * (WIDTH // PIXEL_SIZE) + (snake_pixel.x // PIXEL_SIZE))]
+        if not snake_cell:
+            distance = abs(snake_pixel.x - current_food_pixel.x) + abs(snake_pixel.y - current_food_pixel.y)
+    return distance
+
+def choose_next_move(grid, snake, current_food_pixel):
+    # Compute the distance of the 4 cells next to the snake's head to the food
+    left_dist = get_distance(grid, Pixel(snake.head.x - PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Left pixel
+    right_dist = get_distance(grid, Pixel(snake.head.x + PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Right pixel
+    up_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y - PIXEL_SIZE, BLUE), current_food_pixel) #Top pixel
+    down_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y + PIXEL_SIZE, BLUE), current_food_pixel) # Up pixel
+    
+    # print(left_dist, right_dist, up_dist, down_dist)
+    # print('------')
+    possible_distances = [dist for dist in [left_dist, right_dist, up_dist, down_dist] if dist >= 0]
+    if len(possible_distances) > 0:
+        next_move = min(possible_distances)
+        if left_dist == next_move and snake.direction != 'right':
+            snake.direction = 'left'
+        elif right_dist == next_move and snake.direction != 'left':
+            snake.direction = 'right'
+        elif up_dist == next_move and snake.direction != 'down':
+            snake.direction = 'up'
+        elif down_dist == next_move and snake.direction != 'up':
+            snake.direction = 'down'
+
 class Button:
     def __init__(self, x, y , width, height, color, message, message_x, message_y):
         self.x = x
@@ -108,7 +139,7 @@ class Snake:
     def __init__(self):
         self.head = Pixel(WIDTH / 2, HEIGHT / 2, GREEN) #Initial head position of the snake
         self.blocks = [self.head] #Position of all the snake blocks
-        self.direction = None
+        self.direction = 'left'
         self.color = BLUE
         self.is_collide = False
         self.length = 1
@@ -160,18 +191,19 @@ def display_menu():
     quit_button.draw()    
 
 def main():
+    temp = None # ONly for testing for NOW!!!
     is_main_menu = True #Variable to know if we are in the main menu
     is_playing = False # Indicate whether the player has started the game
-    is_manual = True # Indicate the game mode
+    is_manual = False # Indicate the game mode
     is_option = False
     is_level = False
     is_mode = False
-    difficulty = 'medium'
+    difficulty = 'hard'
     clock = pygame.time.Clock()
     run = True
+    pygame.init()
     snake = Snake()
     grid = Grid()
-    pygame.init()
     food = Food(snake.is_collide, snake.length, grid)
     play_button = Button(WIDTH / 3, HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'PLAY', 3 * WIDTH / 8, 3 * HEIGHT / 16)
     option_button = Button(WIDTH / 3, 3 * HEIGHT / 8, WIDTH / 3, HEIGHT / 8, GREY, 'OPTIONS', 3 * WIDTH / 8, 7 * HEIGHT / 16)
@@ -202,13 +234,14 @@ def main():
         elif difficulty == 'medium':
             clock.tick(fps * 2)
         elif difficulty == 'hard':
-            clock.tick(fps * 4)
+            clock.tick(fps * 10)
 
         event = pygame.event.poll()
         mouse = pygame.mouse.get_pos()
         if event.type == pygame.QUIT:
                 run = False
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN: #Only allow interaction if the mode is manual
+            if is_manual:    
                 if event.key == pygame.K_LEFT and snake.direction != 'right':
                     snake.direction = 'left'
                     # print('press left')
@@ -221,8 +254,13 @@ def main():
                 elif event.key == pygame.K_UP and snake.direction != 'down':
                     snake.direction = 'up'
                     # print('press down')
-                elif event.key == pygame.K_SPACE:
-                    snake.direction = None
+            elif event.key == pygame.K_SPACE:
+                    if temp == None:
+                        temp = snake.direction
+                        snake.direction = None
+                    else:
+                        snake.direction = temp
+                        temp = None
         elif event.type == pygame.MOUSEBUTTONDOWN:
             print(mouse)
             if is_main_menu:
@@ -268,10 +306,13 @@ def main():
 
         if is_playing:
             #Display score
-            smallfont = pygame.font.SysFont('Corbel', 30)
-            score = smallfont.render('Score: ' + str(snake.length) , True , BLACK)  
-            WIN.blit(score, (20, 20))          
-            if is_manual:
+                smallfont = pygame.font.SysFont('Corbel', 30)
+                score = smallfont.render('Score: ' + str(snake.length) , True , BLACK)  
+                WIN.blit(score, (20, 20))          
+            # if is_manual:
+                if not is_manual and snake.direction != None:
+                    choose_next_move(grid, snake, food.current_pixel)
+
                 if snake.direction == 'left':
                     snake.move_left()
                     # print('left')
@@ -296,10 +337,13 @@ def main():
                 #Detect collision with itself (game over)
                 if snake.direction != None:
                     if snake.head.x < 0 or snake.head.x > WIDTH - PIXEL_SIZE or snake.head.y < 0 or snake.head.y > HEIGHT- PIXEL_SIZE or grid.cells[int(snake.head.y * (HEIGHT // 20) // 20 + snake.head.x // 20)]:
-                        is_playing = False
-                        is_main_menu = True
+                        if is_manual:
+                            is_playing = False
+                            is_main_menu = True
                         snake = Snake()
                         grid = Grid()
+                        food = Food(snake.is_collide, snake.length, grid)
+                        print('-----')
 
                 #Reset the status of each cell on the grid (whethere it is a snake block)
                 grid = Grid()
@@ -312,8 +356,8 @@ def main():
                 # print(food.current_pixel.x, food.current_pixel.y)
                 food.current_pixel.draw()
                 
-                    
-                # print(grid.cells)
+            # else:
+            #     pass    
         # pygame.quit()
 
         if is_option:
