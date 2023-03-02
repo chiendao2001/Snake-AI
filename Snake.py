@@ -10,7 +10,8 @@ sys.path.append("/Users/chiendao/Desktop/Snake AI/button")
 
 
 WIDTH, HEIGHT = int(600), int(600)
-ROWS = 20
+PIXEL_SIZE = int(20) #How big one pixel is
+ROWS = 20 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake")
 
@@ -36,7 +37,6 @@ def draw_window():
 direction = NONE
 
 start = 100
-PIXEL_SIZE = int(20) #How big one pixel is
 
 class Pixel:
     def __init__(self, x, y, color):
@@ -68,30 +68,30 @@ def depth_first_search(grid, current_cell_index, visited_cells, num_of_visited_c
         #Only check traverse the left cell if it is not visited yet and is not a snake block
             if not (grid.cells[left_cell_index] or visited_cells.cells[left_cell_index]):
             # print('left')
-                visited_cells.cells[left_cell_index] = True
+                # visited_cells.cells[left_cell_index] = True
                 num_of_visited_cells = depth_first_search(grid, left_cell_index, visited_cells, num_of_visited_cells)
         #Only check right cell if the current cell is not at the right edge of the grid
-        if current_cell_index % (WIDTH // PIXEL_SIZE)!= WIDTH // PIXEL_SIZE - 1 and num_of_visited_cells <= 8 * ((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - sum(grid.cells)) // 10:
+        if current_cell_index % (WIDTH // PIXEL_SIZE)!= WIDTH // PIXEL_SIZE - 1:
             right_cell_index = current_cell_index + 1
             # num_of_visited_cells = 0
             #Only check traverse the right cell if it is not visited yet and is not a snake block
             if not (grid.cells[right_cell_index] or visited_cells.cells[right_cell_index]):
-                visited_cells.cells[right_cell_index] = True
+                # visited_cells.cells[right_cell_index] = True
                 num_of_visited_cells = depth_first_search(grid, right_cell_index, visited_cells, num_of_visited_cells)
         #Only check top cell if the current cell is not at the top edge of the grid
-        if current_cell_index >= WIDTH // PIXEL_SIZE and num_of_visited_cells <= 8 * ((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - sum(grid.cells)) // 10:
+        if current_cell_index >= WIDTH // PIXEL_SIZE:
             top_cell_index = current_cell_index - WIDTH // PIXEL_SIZE
             # num_of_visited_cells = 0
             #Only check traverse the right cell if it is not visited yet and is not a snake block
             if not (grid.cells[top_cell_index] or visited_cells.cells[top_cell_index]):
-                visited_cells.cells[top_cell_index] = True
+                # visited_cells.cells[top_cell_index] = True
                 num_of_visited_cells = depth_first_search(grid, top_cell_index, visited_cells, num_of_visited_cells)
         #Only check bottom cell if the current cell is not at the bottom edge of the grid
-        if current_cell_index < (HEIGHT // PIXEL_SIZE - 1) * (WIDTH // PIXEL_SIZE) and 8 * ((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - sum(grid.cells)) // 10:
+        if current_cell_index < (HEIGHT // PIXEL_SIZE - 1) * (WIDTH // PIXEL_SIZE):
             bottom_cell_index = current_cell_index + WIDTH // PIXEL_SIZE
             #Only check traverse the right cell if it is not visited yet and is not a snake block
             if not (grid.cells[bottom_cell_index] or visited_cells.cells[bottom_cell_index]):
-                visited_cells.cells[bottom_cell_index] = True
+                # visited_cells.cells[bottom_cell_index] = True
                 num_of_visited_cells = depth_first_search(grid, bottom_cell_index, visited_cells, num_of_visited_cells)
     
     # print(current_cell_index)
@@ -113,14 +113,22 @@ def get_distance(grid, snake_pixel, current_food_pixel):
             distance = abs(snake_pixel.x - current_food_pixel.x) + abs(snake_pixel.y - current_food_pixel.y)
     return distance
 
-def choose_next_move(grid, snake, current_food_pixel):
-    targeted_size = ((WIDTH // 20) * (HEIGHT // 20) - snake.length) * 0.8 #The smallest region we want for our snake to move
+def choose_next_move(grid, snake, current_food_pixel, is_shortest):
+    targeted_size = ((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - snake.length) * 0.9 #The smallest region we want for our snake to move
     # Compute the distance of the 4 cells next to the snake's head to the food
     # print('choosing')
-    left_dist = get_distance(grid, Pixel(snake.head.x - PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Left pixel
-    right_dist = get_distance(grid, Pixel(snake.head.x + PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Right pixel
-    up_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y - PIXEL_SIZE, BLUE), current_food_pixel) #Top pixel
-    down_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y + PIXEL_SIZE, BLUE), current_food_pixel) # Up pixel
+    left_dist = -1 
+    right_dist = - 1 
+    up_dist = -1 
+    down_dist = -1
+    if snake.direction != 'right':
+        left_dist = get_distance(grid, Pixel(snake.head.x - PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Left pixel
+    if snake.direction != 'left':
+        right_dist = get_distance(grid, Pixel(snake.head.x + PIXEL_SIZE, snake.head.y, BLUE), current_food_pixel) # Right pixel
+    if snake.direction != 'down':
+        up_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y - PIXEL_SIZE, BLUE), current_food_pixel) #Top pixel
+    if snake.direction != 'up':
+        down_dist = get_distance(grid, Pixel(snake.head.x, snake.head.y + PIXEL_SIZE, BLUE), current_food_pixel) # Up pixel
     
     left_pixel = Pixel(snake.head.x - PIXEL_SIZE, snake.head.y, BLUE)
     right_pixel = Pixel(snake.head.x + PIXEL_SIZE, snake.head.y, BLUE)
@@ -134,7 +142,6 @@ def choose_next_move(grid, snake, current_food_pixel):
 
     current_index = int((snake.head.y // PIXEL_SIZE) * (WIDTH // PIXEL_SIZE) + (snake.head.x // PIXEL_SIZE))
     # print(current_food_pixel.x, current_food_pixel.y)
-    # print(current_index)
 
     if left_pixel.x >= 0 and left_pixel.x < WIDTH and left_pixel.y >= 0 and left_pixel.y < HEIGHT:
         left_index = int((left_pixel.y // PIXEL_SIZE) * (WIDTH // PIXEL_SIZE) + (left_pixel.x // PIXEL_SIZE))
@@ -148,32 +155,37 @@ def choose_next_move(grid, snake, current_food_pixel):
             # temp_grid = copy.deepcopy(grid)
             temp_grid = Grid()
             for block in temp_snake.blocks:
-                    temp_grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
-            
-            if left_index % (WIDTH // 20) != 0:
+                    temp_grid.cells[int(block.y * (HEIGHT //PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
+
+            if left_index % (WIDTH // PIXEL_SIZE) != 0:
                 left_of_left_index = left_index - 1
                 if not temp_grid.cells[left_of_left_index]:
                     # print('left left')
-                    number_of_left_reachable_pixels = depth_first_search(temp_grid, left_of_left_index, visited_cells, 0)
+                    a1 = depth_first_search(temp_grid, left_of_left_index, visited_cells, 0)
+                    number_of_left_reachable_pixels = a1
+                    
 
-            if left_index % (WIDTH // 20) != (WIDTH // 20) - 1 and number_of_left_reachable_pixels <= targeted_size:
+            if left_index % (WIDTH // PIXEL_SIZE) != (WIDTH // PIXEL_SIZE) - 1 and number_of_left_reachable_pixels <= targeted_size:
                 right_of_left_index = left_index + 1
                 if not temp_grid.cells[right_of_left_index]:
                     # print('right left')
-                    number_of_left_reachable_pixels = max(depth_first_search(temp_grid, right_of_left_index, visited_cells, 0), number_of_left_reachable_pixels)
+                    a2 = depth_first_search(temp_grid, right_of_left_index, visited_cells, 0)
+                    number_of_left_reachable_pixels = max(a2, number_of_left_reachable_pixels)
               
 
-            if left_index >= (WIDTH // 20) and number_of_left_reachable_pixels <= targeted_size:
-                top_of_left_index = left_index - (WIDTH // 20)
+            if left_index >= (WIDTH // PIXEL_SIZE) and number_of_left_reachable_pixels <= targeted_size:
+                top_of_left_index = left_index - (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[top_of_left_index]:
                     # print('up left')
-                    number_of_left_reachable_pixels = max(depth_first_search(temp_grid, top_of_left_index, visited_cells, 0), number_of_left_reachable_pixels)
+                    a3 = depth_first_search(temp_grid, top_of_left_index, visited_cells, 0)
+                    number_of_left_reachable_pixels = max(a3, number_of_left_reachable_pixels)
                           
-            if left_index < (WIDTH // 20) * (HEIGHT // 20 - 1) and number_of_left_reachable_pixels <= targeted_size:
-                bottom_of_left_index = left_index + (WIDTH // 20)
+            if left_index < (WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE - 1) and number_of_left_reachable_pixels <= targeted_size:
+                bottom_of_left_index = left_index + (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[bottom_of_left_index]:
                     # print('down left')
-                    number_of_left_reachable_pixels = max(depth_first_search(temp_grid, bottom_of_left_index, visited_cells, 0), number_of_left_reachable_pixels)
+                    a4 = depth_first_search(temp_grid, bottom_of_left_index, visited_cells, 0)
+                    number_of_left_reachable_pixels = max(a4, number_of_left_reachable_pixels)
                                     
             # number_of_left_reachable_pixels = depth_first_search(temp_snake.grid, left_index, visited_cells, 0)
             # print('done left')
@@ -187,34 +199,38 @@ def choose_next_move(grid, snake, current_food_pixel):
             temp_snake.move_right()
             temp_grid = Grid()
             for block in temp_snake.blocks:
-                    temp_grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
-            
+                    temp_grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
+
             visited_cells.cells[current_index] = True
-            if right_index % (WIDTH // 20) != 0:
+            if right_index % (WIDTH // PIXEL_SIZE) != 0:
                 left_of_right_index = right_index - 1
                 if not temp_grid.cells[left_of_right_index]:
                     # print('left right')
-                    number_of_right_reachable_pixels = depth_first_search(temp_grid, left_of_right_index, visited_cells, 0)
+                    a5 = depth_first_search(temp_grid, left_of_right_index, visited_cells, 0)
+                    number_of_right_reachable_pixels = a5
 
 
-            if right_index % (WIDTH // 20) != (WIDTH // 20) - 1 and number_of_right_reachable_pixels <= targeted_size:
+            if right_index % (WIDTH // PIXEL_SIZE) != (WIDTH // PIXEL_SIZE) - 1 and number_of_right_reachable_pixels <= targeted_size:
                 right_of_right_index = right_index + 1
                 if not temp_grid.cells[right_of_right_index]:
                     # print('right right')
-                    number_of_right_reachable_pixels = max(depth_first_search(temp_grid, right_of_right_index, visited_cells, 0), number_of_right_reachable_pixels)
+                    a6 =  depth_first_search(temp_grid, right_of_right_index, visited_cells, 0)
+                    number_of_right_reachable_pixels = max(a6, number_of_right_reachable_pixels)
               
 
-            if right_index >= (WIDTH // 20) and number_of_right_reachable_pixels <= targeted_size:
-                top_of_right_index = right_index - (WIDTH // 20)
+            if right_index >= (WIDTH // PIXEL_SIZE) and number_of_right_reachable_pixels <= targeted_size:
+                top_of_right_index = right_index - (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[top_of_right_index]:
                     # print('up right')
-                    number_of_right_reachable_pixels = max(depth_first_search(temp_grid, top_of_right_index, visited_cells, 0), number_of_right_reachable_pixels)
+                    a7 = depth_first_search(temp_grid, top_of_right_index, visited_cells, 0)
+                    number_of_right_reachable_pixels = max(a7, number_of_right_reachable_pixels)
                           
-            if right_index < (WIDTH // 20) * (HEIGHT // 20 - 1) and number_of_right_reachable_pixels <= targeted_size:
-                bottom_of_right_index = right_index + (WIDTH // 20)
+            if right_index < (WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE - 1) and number_of_right_reachable_pixels <= targeted_size:
+                bottom_of_right_index = right_index + (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[bottom_of_right_index]:
                     # print('down right')
-                    number_of_right_reachable_pixels = max(depth_first_search(temp_grid, bottom_of_right_index, visited_cells, 0), number_of_right_reachable_pixels)
+                    a8 = depth_first_search(temp_grid, bottom_of_right_index, visited_cells, 0)
+                    number_of_right_reachable_pixels = max(a8, number_of_right_reachable_pixels)
                                
             # number_of_right_reachable_pixels = depth_first_search(temp_grid, right_index, visited_cells, 0)
             # number_of_right_reachable_pixels = depth_first_search(temp_snake.grid, right_index, visited_cells, 0)
@@ -229,34 +245,37 @@ def choose_next_move(grid, snake, current_food_pixel):
             temp_snake.move_up()
             temp_grid = Grid()
             for block in temp_snake.blocks:
-                    temp_grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+                    temp_grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
             visited_cells.cells[current_index] = True
-
-            if up_index % (WIDTH // 20) != 0:
+            if up_index % (WIDTH // PIXEL_SIZE) != 0:
                 left_of_up_index = up_index - 1
                 if not temp_grid.cells[left_of_up_index]:
                     # print('left up')
-                    number_of_up_reachable_pixels = depth_first_search(temp_grid, left_of_up_index, visited_cells, 0)
+                    a9 = depth_first_search(temp_grid, left_of_up_index, visited_cells, 0)
+                    number_of_up_reachable_pixels = a9
 
 
-            if up_index % (WIDTH // 20) != (WIDTH // 20) - 1 and number_of_up_reachable_pixels <= targeted_size:
+            if up_index % (WIDTH // PIXEL_SIZE) != (WIDTH // PIXEL_SIZE) - 1 and number_of_up_reachable_pixels <= targeted_size:
                 right_of_up_index = up_index + 1
                 if not temp_grid.cells[right_of_up_index]:
                     # print('right up')
-                    number_of_up_reachable_pixels = max(depth_first_search(temp_grid, right_of_up_index, visited_cells, 0), number_of_up_reachable_pixels)
+                    a10 = depth_first_search(temp_grid, right_of_up_index, visited_cells, 0)
+                    number_of_up_reachable_pixels = max(a10, number_of_up_reachable_pixels)
               
 
-            if up_index >= (WIDTH // 20) and number_of_up_reachable_pixels <= targeted_size:
-                top_of_up_index = up_index - (WIDTH // 20)
+            if up_index >= (WIDTH // PIXEL_SIZE) and number_of_up_reachable_pixels <= targeted_size:
+                top_of_up_index = up_index - (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[top_of_up_index]:
                     # print('up up')
-                    number_of_up_reachable_pixels = max(depth_first_search(temp_grid, top_of_up_index, visited_cells, 0), number_of_up_reachable_pixels)
+                    a11 = depth_first_search(temp_grid, top_of_up_index, visited_cells, 0)
+                    number_of_up_reachable_pixels = max(a11, number_of_up_reachable_pixels)
                           
-            if up_index < (WIDTH // 20) * (HEIGHT // 20 - 1) and number_of_up_reachable_pixels <= targeted_size:
-                bottom_of_up_index = up_index + (WIDTH // 20)
+            if up_index < (WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE - 1) and number_of_up_reachable_pixels <= targeted_size:
+                bottom_of_up_index = up_index + (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[bottom_of_up_index]:
                     # print('down up')
-                    number_of_up_reachable_pixels = max(depth_first_search(temp_grid, bottom_of_up_index, visited_cells, 0), number_of_up_reachable_pixels)
+                    a12 = depth_first_search(temp_grid, bottom_of_up_index, visited_cells, 0)
+                    number_of_up_reachable_pixels = max(a12, number_of_up_reachable_pixels)
                                     # number_of_up_reachable_pixels = depth_first_search(temp_grid, up_index, visited_cells, 0)
             # number_of_up_reachable_pixels = depth_first_search(temp_snake.grid, up_index, visited_cells, 0)
             # print('done up')
@@ -270,63 +289,84 @@ def choose_next_move(grid, snake, current_food_pixel):
             temp_snake.move_down()
             temp_grid = Grid()
             for block in temp_snake.blocks:
-                    temp_grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+                    temp_grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
             visited_cells.cells[current_index] = True
 
-            if down_index % (WIDTH // 20) != 0:
+            if down_index % (WIDTH // PIXEL_SIZE) != 0:
                 left_of_down_index = down_index - 1
                 if not temp_grid.cells[left_of_down_index]:
                     # print('left down')
-                    number_of_down_reachable_pixels = depth_first_search(temp_grid, left_of_down_index, visited_cells, 0)
+                    a13 = depth_first_search(temp_grid, left_of_down_index, visited_cells, 0)
+                    number_of_down_reachable_pixels = a13
 
 
-            if down_index % (WIDTH // 20) != (WIDTH // 20) - 1 and number_of_down_reachable_pixels <= targeted_size:
+            if down_index % (WIDTH // PIXEL_SIZE) != (WIDTH // PIXEL_SIZE) - 1 and number_of_down_reachable_pixels <= targeted_size:
                 right_of_down_index = down_index + 1
                 if not temp_grid.cells[right_of_down_index]:
                     # print('right down')
-                    number_of_down_reachable_pixels = max(depth_first_search(temp_grid, right_of_down_index, visited_cells, 0), number_of_down_reachable_pixels)
+                    a14 = depth_first_search(temp_grid, right_of_down_index, visited_cells, 0)
+                    number_of_down_reachable_pixels = max(a14, number_of_down_reachable_pixels)
               
 
-            if down_index >= (WIDTH // 20) and number_of_down_reachable_pixels <= targeted_size:
-                top_of_down_index = down_index - (WIDTH // 20)
+            if down_index >= (WIDTH // PIXEL_SIZE) and number_of_down_reachable_pixels <= targeted_size:
+                top_of_down_index = down_index - (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[top_of_down_index]:
                     # print('up down')
-                    number_of_down_reachable_pixels = max(depth_first_search(temp_grid, top_of_down_index, visited_cells, 0), number_of_down_reachable_pixels)
+                    a15 = depth_first_search(temp_grid, top_of_down_index, visited_cells, 0)
+                    number_of_down_reachable_pixels = max(a15, number_of_down_reachable_pixels)
                           
-            if down_index < (WIDTH // 20) * (HEIGHT // 20 - 1) and number_of_down_reachable_pixels <= targeted_size:
-                bottom_of_down_index = down_index + (WIDTH // 20)
+            if down_index < (WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE - 1) and number_of_down_reachable_pixels <= targeted_size:
+                bottom_of_down_index = down_index + (WIDTH // PIXEL_SIZE)
                 if not temp_grid.cells[bottom_of_down_index]:
                     # print('down down')
-                    number_of_down_reachable_pixels = max(depth_first_search(temp_grid, bottom_of_down_index, visited_cells, 0), number_of_down_reachable_pixels)
+                    a16 = depth_first_search(temp_grid, bottom_of_down_index, visited_cells, 0)
+                    number_of_down_reachable_pixels = max(a16, number_of_down_reachable_pixels)
                                     # number_of_down_reachable_pixels = depth_first_search(temp_grid, down_index, visited_cells, 0)
             # number_of_down_reachable_pixels = depth_first_search(temp_snake.grid, down_index, visited_cells, 0)
             # print('done down')
     # print(left_dist, right_dist, up_dist, down_dist)
-    # print(number_of_left_reachable_pixels, number_of_right_reachable_pixels, number_of_up_reachable_pixels, number_of_down_reachable_pixels)
     # print('------')
     possible_distances = [(dist, nums, direction) for (dist, nums, direction) in [(left_dist, number_of_left_reachable_pixels, 'left'), (right_dist, number_of_right_reachable_pixels, 'right'), (up_dist, number_of_up_reachable_pixels, 'up'), (down_dist, number_of_down_reachable_pixels, 'down')] if dist >= 0]
     best_distances = [(dist, nums, direction) for (dist, nums, direction) in possible_distances if nums >= 8 * ((WIDTH // PIXEL_SIZE) * (HEIGHT // PIXEL_SIZE) - snake.length) // 10]
     sorted_dist = []
-    if len(best_distances) > 0:
-        sorted_dist = sorted(best_distances, key=lambda x: x[0])
-    elif len(possible_distances) > 0:
-        sorted_dist = sorted(possible_distances, key=lambda x: x[1])
-        sorted_dist.reverse()
-    
+    # if len(best_distances) > 0 and is_shortest:
+    #     sorted_dist = sorted(best_distances, key=lambda x: x[0])
+    # elif len(possible_distances) > 0:
+    possible_distances = [(dist, -nums, direction) for (dist, nums, direction) in possible_distances]
+    sorted_dist = sorted(possible_distances, key=lambda x:(x[1], x[0]))
+    sorted_dist = [i for i in sorted_dist if (i[1] == sorted_dist[0][1] and i[0] == sorted_dist[0][0])]
+        # sorted_dist.reverse()
+    # print(sorted_dist)
     if len(sorted_dist) > 0:
-        for (dist, nums, direction) in sorted_dist:
-            if direction == 'left' and snake.direction != 'right':
-                snake.direction = direction
-                break
-            elif direction == 'right' and snake.direction != 'left':
-                snake.direction = direction
-                break        
-            elif direction == 'up' and snake.direction != 'down':
-                snake.direction = direction
-                break            
-            elif direction == 'down' and snake.direction != 'up':
-                snake.direction = direction
-                break            # next_move = list(zip(*possible_distances))
+        # random_index = 0
+        # min_element = sorted_dist[0]
+        # frequency_of_min_element = sum((i[0] == min_element[0] and i[1] == min_element[1]) for i in sorted_dist)
+        # if frequency_of_min_element > 1:
+        #     random_index = random.randint(0, frequency_of_min_element - 1)
+
+        # snake.direction = sorted_dist[random_index][2]
+
+        if len(sorted_dist) > 1:
+            if snake.direction not in [direction for (dist, num, direction) in sorted_dist]:
+                random_index = random.randint(0, len(sorted_dist) - 1)
+                snake.direction = sorted_dist[random_index][2]
+        else:
+            snake.direction = sorted_dist[0][2]
+        
+
+        # for (dist, nums, direction) in sorted_dist:
+        #     if direction == 'left' and snake.direction != 'right':
+        #         snake.direction = direction
+        #         break
+        #     elif direction == 'right' and snake.direction != 'left':
+        #         snake.direction = direction
+        #         break        
+        #     elif direction == 'up' and snake.direction != 'down':
+        #         snake.direction = direction
+        #         break            
+        #     elif direction == 'down' and snake.direction != 'up':
+        #         snake.direction = direction
+        #         break            # next_move = list(zip(*possible_distances))
         # if left_dist == next_move and snake.direction != 'right':
         #     snake.direction = 'left'
         # elif right_dist == next_move and snake.direction != 'left':
@@ -384,7 +424,7 @@ class Food:
                 # print(grid.cells[i])
                 if grid.cells[i] == False:
                     if counter == random_pixel:
-                        self.current_pixel = Pixel(PIXEL_SIZE * (i % (WIDTH // 20)),PIXEL_SIZE * (i // (WIDTH // 20)), RED)
+                        self.current_pixel = Pixel(PIXEL_SIZE * (i % (WIDTH // PIXEL_SIZE)),PIXEL_SIZE * (i // (WIDTH // PIXEL_SIZE)), RED)
                         break
                     counter = counter + 1
         # else:
@@ -392,7 +432,7 @@ class Food:
 
 class Snake:
     def __init__(self, grid):
-        self.head = Pixel(WIDTH / 2, HEIGHT / 2, GREEN) #Initial head position of the snake
+        self.head = Pixel(WIDTH // 2 - (WIDTH // 2) % PIXEL_SIZE, HEIGHT / 2 - (HEIGHT // 2) % PIXEL_SIZE, GREEN) #Initial head position of the snake
         self.blocks = [self.head] #Position of all the snake blocks
         self.direction = 'left'
         self.color = BLUE
@@ -401,37 +441,41 @@ class Snake:
         self.grid = grid
 
     def move_left(self):
+        # print(self.is_collide)
         self.blocks.insert(0, Pixel(self.head.x - PIXEL_SIZE, self.head.y, BLUE))
         self.head = self.blocks[0]
         if not self.is_collide:
             del self.blocks[-1]
-        for block in self.blocks[1:]:
-            self.grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+        # for block in self.blocks[1:]:
+        #     self.grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
             
 
     def move_right(self):
+        # print(self.is_collide)
         self.blocks.insert(0, Pixel(self.head.x + PIXEL_SIZE, self.head.y, BLUE))
         self.head = self.blocks[0]
         if not self.is_collide:
             del self.blocks[-1]
-        for block in self.blocks[1:]:
-            self.grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+        #     self.grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
 
     def move_up(self):
+        # print(self.is_collide)
         self.blocks.insert(0, Pixel(self.head.x, self.head.y - PIXEL_SIZE, BLUE))
         self.head = self.blocks[0]
         if not self.is_collide:
           del self.blocks[-1]
-        for block in self.blocks[1:]:
-            self.grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+
+        # for block in self.blocks[1:]:
+        #     self.grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
 
     def move_down(self):
+        # print(self.is_collide)
         self.blocks.insert(0, Pixel(self.head.x, self.head.y + PIXEL_SIZE, BLUE))
         self.head = self.blocks[0]
         if not self.is_collide:
             del self.blocks[-1]
-        for block in self.blocks[1:]:
-            self.grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+        # for block in self.blocks[1:]:
+        #     self.grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
     
     def draw(self):
         for block in self.blocks:
@@ -452,7 +496,8 @@ def display_menu():
     quit_button.draw()    
 
 def main():
-    temp = None # ONly for testing for NOW!!!
+    temp = None
+    counter = 0 # Only for testing for NOW!!!
     is_main_menu = True #Variable to know if we are in the main menu
     is_playing = False # Indicate whether the player has started the game
     is_manual = False # Indicate the game mode
@@ -516,6 +561,8 @@ def main():
                     snake.direction = 'up'
                     # print('press down')
             elif event.key == pygame.K_SPACE:
+                    print(len(snake.blocks))
+                    print(sum(grid.cells))
                     if temp == None:
                         temp = snake.direction
                         snake.direction = None
@@ -523,12 +570,10 @@ def main():
                         snake.direction = temp
                         temp = None
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            print(mouse)
             if is_main_menu:
                 if mouse[0] >= play_button.x and mouse[0] <= play_button.x + play_button.width and mouse[1] >= play_button.y and mouse[1] <= play_button.y + play_button.height:
                     is_playing = True
                     is_main_menu = False
-                    print('success')
                 elif mouse[0] >= quit_button.x and mouse[0] <= quit_button.x + quit_button.width and mouse[1] >= quit_button.y and mouse[1] <= quit_button.y + quit_button.height:
                     pygame.quit()
                     run = False
@@ -571,37 +616,32 @@ def main():
                 score = smallfont.render('Score: ' + str(snake.length) , True , BLACK)  
                 WIN.blit(score, (20, 20))          
             # if is_manual:
-                if not is_manual and snake.direction != None:
-                    choose_next_move(grid, snake, food.current_pixel)
 
-                if snake.direction == 'left':
-                    snake.move_left()
-                    # print('left')
-                elif snake.direction == 'right':
-                    snake.move_right()
-                    # print('right')
-                elif snake.direction == 'up':
-                    snake.move_up()
-                    # print('up')
-                elif snake.direction == 'down':
-                    snake.move_down()
-                    # print('down')
-                
-                if abs(snake.head.x - food.current_pixel.x) < 20 and abs(snake.head.y - food.current_pixel.y) < 20:
+                if abs(snake.head.x - food.current_pixel.x) < PIXEL_SIZE and abs(snake.head.y - food.current_pixel.y) < PIXEL_SIZE:
                     snake.is_collide = True
+                    # print(snake.is_collide)
                     snake.length = snake.length + 1
                     # print(sum(snake.grid.cells))
                     # food.remove_pixel(snake.blocks[-1])
                 else:
                     snake.is_collide = False
 
+                if snake.direction == 'left':
+                    snake.move_left()
+                elif snake.direction == 'right':
+                    snake.move_right()
+                elif snake.direction == 'up':
+                    snake.move_up()
+                elif snake.direction == 'down':
+                    snake.move_down()
+                
                 #Detect collision with itself (game over)
                 if snake.direction != None:
-                    if snake.head.x < 0 or snake.head.x > WIDTH - PIXEL_SIZE or snake.head.y < 0 or snake.head.y > HEIGHT- PIXEL_SIZE or grid.cells[int(snake.head.y * (HEIGHT // 20) // 20 + snake.head.x // 20)]:
+                    if snake.head.x < 0 or snake.head.x > WIDTH - PIXEL_SIZE or snake.head.y < 0 or snake.head.y > HEIGHT- PIXEL_SIZE or grid.cells[int(snake.head.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + snake.head.x // PIXEL_SIZE)]:
                         if is_manual:
                             is_playing = False
                             is_main_menu = True
-                        # print(snake.length)
+                        print(snake.length)
 
                         grid = Grid()
                         snake = Snake(grid)
@@ -612,16 +652,22 @@ def main():
                 #Reset the status of each cell on the grid (whethere it is a snake block)
                 grid = Grid()
                 for block in snake.blocks:
-                    grid.cells[int(block.y * (HEIGHT // 20) // 20 + block.x // 20)] = True
+                    grid.cells[int(block.y * (HEIGHT // PIXEL_SIZE) // PIXEL_SIZE + block.x // PIXEL_SIZE)] = True
             
                 food.spawn_food(snake.is_collide, snake.length, grid)
+                snake.is_collide = False
                 snake.draw()
                 # print(food.current_pixel.x, food.current_pixel.y)
                 food.current_pixel.draw()
+
+                if not is_manual and snake.direction != None:
+                    choose_next_move(grid, snake, food.current_pixel, counter)
+                    counter = (counter + 1) % 4
                 
             # else:
             #     pass    
         # pygame.quit()
+        # print(snake.length)
 
         if is_option:
             back_button.draw()
